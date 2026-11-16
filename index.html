@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SavePoint</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <nav>
+    <a href="#" class="brand" onclick="navigate('home')">SavePoint</a>
+    <div class="nav-links">
+      <a href="#" onclick="navigate('search')">Buscar</a>
+      <a href="#" id="nav-dashboard" onclick="navigate('dashboard')" style="display:none;">Dashboard</a>
+      <a href="#" id="nav-profile" onclick="navigate('profile')" style="display:none;">Perfil</a>
+      <button id="nav-login-btn" onclick="navigate('login')">Login</button>
+      <button id="nav-logout-btn" class="outline" onclick="handleLogout()" style="display:none;">Sair</button>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- HOME PAGE -->
+    <section id="home" class="page-section active">
+      <div class="text-center mt-2 mb-2">
+        <h1>Bem-vindo ao SavePoint</h1>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">
+          Organize seu backlog, registre o que jogou e descubra novos mundos.
+        </p>
+        <div id="remove">
+          <button onclick="navigate('register')" style="margin-right: 1rem;">Começar Agora</button>
+          <button class="outline" onclick="navigate('login')">Já tenho conta</button>
+        </div>
+      </div>
+      <h2>Jogos em Destaque</h2>
+      <div id="home-featured-games" class="game-grid mt-2"></div>
+    </section>
+
+    <!-- LOGIN PAGE -->
+    <section id="login" class="page-section">
+      <div style="max-width: 400px; margin: 2rem auto;">
+        <div class="card">
+          <h2 style="margin-bottom: 1rem;">Login</h2>
+          <form onsubmit="handleLogin(event)">
+            <label>E-mail</label>
+            <input type="email" id="login-email" required>
+            <label>Senha</label>
+            <input type="password" id="login-password" required>
+            <button type="submit" style="width: 100%;">Entrar</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- REGISTER PAGE -->
+    <section id="register" class="page-section">
+      <div style="max-width: 400px; margin: 2rem auto;">
+        <div class="card">
+          <h2 style="margin-bottom: 1rem;">Registro</h2>
+          <form onsubmit="handleRegister(event)">
+            <label>Nome</label>
+            <input type="text" id="reg-name" required>
+            <label>E-mail</label>
+            <input type="email" id="reg-email" required>
+            <label>Senha (mínimo 6 caracteres)</label>
+            <input type="password" id="reg-password" minlength="6" placeholder="Mínimo 6 caracteres" required>
+            <button type="submit" style="width: 100%;">Criar Conta</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD PAGE -->
+    <section id="dashboard" class="page-section">
+      <h2>Dashboard</h2>
+      <p style="color: var(--text-muted); margin-bottom: 2rem;">Atividades recentes da comunidade.</p>
+      <div class="card">
+        <h3>Atividades Recentes</h3>
+        <ul id="dashboard-logs" style="list-style: none; margin-top: 1rem;"></ul>
+      </div>
+    </section>
+
+    <!-- SEARCH / CATALOG PAGE -->
+    <section id="search" class="page-section">
+      <h2>Catálogo e Busca</h2>
+      <div style="margin: 2rem 0;">
+        <input type="text" id="search-input" placeholder="Pesquisar por título..." onkeyup="handleSearch()">
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+          <select id="filter-genre" onchange="handleSearch()">
+            <option value="">Gênero (Todos)</option>
+            <option value="RPG">RPG</option>
+            <option value="Ação">Ação</option>
+            <option value="Aventura">Aventura</option>
+          </select>
+          <select id="filter-platform" onchange="handleSearch()">
+            <option value="">Plataforma (Todas)</option>
+            <option value="PC">PC</option>
+            <option value="PS5">PS5</option>
+            <option value="Nintendo Switch">Nintendo Switch</option>
+          </select>
+        </div>
+      </div>
+      <div id="search-results" class="game-grid"></div>
+    </section>
+
+    <!-- GAME DETAILS PAGE -->
+    <section id="gameDetails" class="page-section">
+      <div class="card flex gap-2 flex-wrap">
+        <img id="game-detail-cover" src="" alt="Capa" style="width: 300px; border-radius: 8px;">
+        <div style="flex: 1;">
+          <h2 id="game-detail-title" style="font-size: 2rem; margin-bottom: 0.5rem;"></h2>
+          <p id="game-detail-info" style="color: var(--text-muted); margin-bottom: 1rem;"></p>
+          <p id="game-detail-synopsis" style="margin-bottom: 2rem;"></p>
+          <button onclick="openLogModal()">Adicionar ao Log</button>
+        </div>
+      </div>
+
+      <div id="log-modal" class="card" style="display: none; border: 2px solid var(--primary); margin-top: 2rem;">
+        <h3>Registrar Jogo</h3>
+        <div style="margin-top: 1rem;">
+          <label>Status</label>
+          <select id="log-status">
+            <option value="jogando">Jogando</option>
+            <option value="concluido">Concluído</option>
+            <option value="abandonado">Abandonado</option>
+            <option value="backlog">Quero Jogar (Backlog)</option>
+          </select>
+          <label>Nota (0 a 10)</label>
+          <input type="number" id="log-rating" min="0" max="10" step="1" placeholder="Ex: 9"
+            onkeydown="if(event.key === '-' || event.key === 'e' || event.key === '+') event.preventDefault();"
+            oninput="if(this.value < 0) this.value = 0; if(this.value > 10) this.value = 10;">
+          <label>Review (Crítica)</label>
+          <textarea id="log-review" rows="4"></textarea>
+          <button onclick="saveLog()">Salvar Registro</button>
+          <button class="danger" style="margin-left: 1rem;" onclick="closeLogModal()">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="mt-2">
+        <h3>Reviews da Comunidade</h3>
+        <ul id="game-reviews" style="list-style: none; margin-top: 1rem;"></ul>
+      </div>
+    </section>
+
+    <!-- PROFILE PAGE -->
+    <section id="profile" class="page-section">
+      <!-- Profile Header -->
+      <div class="profile-card">
+        <div class="flex items-center gap-1" style="flex: 1; min-width: 260px;">
+          <div class="profile-avatar-wrap">
+            <img id="profile-avatar" src="" alt="Avatar">
+          </div>
+          <div class="profile-details">
+            <h2 id="profile-name" style="font-size: 1.8rem; line-height: 1.2;"></h2>
+            <p id="profile-email" style="font-size: 0.85rem; color: var(--secondary); margin-bottom: 0.3rem;"></p>
+            <p id="profile-bio" style="color: var(--text-muted); font-size: 0.95rem;"></p>
+          </div>
+        </div>
+        <div class="profile-actions">
+          <button onclick="openEditProfileModal()">✏️ Editar Perfil</button>
+          <button class="outline" onclick="handleLogout()">🚪 Sair</button>
+        </div>
+      </div>
+
+      <!-- Gamer Stats Grid -->
+      <div class="gamer-stats-grid">
+        <div class="stat-box">
+          <div class="stat-number" id="stat-total">0</div>
+          <div class="stat-label">Total Jogos</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" style="color: var(--secondary);" id="stat-playing">0</div>
+          <div class="stat-label">Jogando</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" style="color: #4ade80;" id="stat-completed">0</div>
+          <div class="stat-label">Concluídos</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" style="color: var(--primary);" id="stat-backlog">0</div>
+          <div class="stat-label">Backlog</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" style="color: var(--danger);" id="stat-abandoned">0</div>
+          <div class="stat-label">Abandonados</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number" style="color: #ffd700;" id="stat-avg-rating">-</div>
+          <div class="stat-label">Nota Média</div>
+        </div>
+      </div>
+
+      <!-- Content Columns: Histórico + Listas -->
+      <div class="flex gap-2 mt-2 flex-wrap">
+        <!-- Coluna da Esquerda: Histórico e Filtros -->
+        <div style="flex: 1.4; min-width: 320px;">
+          <div class="flex justify-between items-center">
+            <h3>Meu Histórico de Jogos</h3>
+            <span id="profile-logs-count" style="font-size: 0.85rem; color: var(--text-muted);">0 jogos</span>
+          </div>
+
+          <!-- Filtros de Status -->
+          <div class="filter-tabs" id="profile-filter-tabs">
+            <button class="filter-btn active" onclick="filterProfileLogs('todos')">Todos</button>
+            <button class="filter-btn" onclick="filterProfileLogs('jogando')">🎮 Jogando</button>
+            <button class="filter-btn" onclick="filterProfileLogs('concluido')">🏆 Concluídos</button>
+            <button class="filter-btn" onclick="filterProfileLogs('backlog')">⏳ Backlog</button>
+            <button class="filter-btn" onclick="filterProfileLogs('abandonado')">🛑 Abandonados</button>
+          </div>
+
+          <ul id="profile-logs" style="list-style: none;"></ul>
+        </div>
+
+        <!-- Coluna da Direita: Minhas Listas Personalizadas (sem dados falsos pré-fixados!) -->
+        <div style="flex: 1; min-width: 300px;">
+          <div class="flex justify-between items-center">
+            <h3>Minhas Listas</h3>
+            <button onclick="openCreateListModal()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">+ Nova
+              Lista</button>
+          </div>
+          <div id="profile-custom-lists" class="mt-1"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODAL: EDITAR PERFIL -->
+    <div id="edit-profile-modal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Editar Meu Perfil</h3>
+          <button class="modal-close-btn" onclick="closeEditProfileModal()">&times;</button>
+        </div>
+        <form onsubmit="handleSaveProfile(event)">
+          <label>Nome de Exibição</label>
+          <input type="text" id="edit-profile-name" required placeholder="Seu nome ou gamertag">
+
+          <label>Bio (Sobre você)</label>
+          <textarea id="edit-profile-bio" rows="3" placeholder="Fale um pouco sobre seus gostos gamer..."></textarea>
+
+          <label>Foto de Perfil (Carregar do seu computador/celular):</label>
+          <div class="avatar-upload-zone" onclick="document.getElementById('edit-profile-file').click()">
+            <input type="file" id="edit-profile-file" accept="image/*" style="display: none;"
+              onchange="handleAvatarFileSelect(event)">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <img id="avatar-upload-preview" src="" alt="Prévia"
+                style="width: 62px; height: 62px; border-radius: 50%; object-fit: cover; border: 2px solid var(--secondary); background: #161a1d;">
+              <div>
+                <span class="btn-upload-text">📁 Escolher Imagem do Dispositivo</span>
+                <p id="avatar-file-status" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem;">
+                  Formatos: PNG, JPG, WebP (será otimizada e salva no banco)</p>
+              </div>
+            </div>
+          </div>
+          <input type="hidden" id="edit-profile-avatar">
+
+          <label>Ou escolha um estilo gamer rápido:</label>
+          <div class="avatar-presets">
+            <img class="preset-avatar-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=CyberKnight"
+              title="Cyber Knight" onclick="selectAvatarPreset(this.src)">
+            <img class="preset-avatar-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=PixelMage"
+              title="Pixel Mage" onclick="selectAvatarPreset(this.src)">
+            <img class="preset-avatar-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=NeonHunter"
+              title="Neon Hunter" onclick="selectAvatarPreset(this.src)">
+            <img class="preset-avatar-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=RetroGamer"
+              title="Retro Gamer" onclick="selectAvatarPreset(this.src)">
+            <img class="preset-avatar-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=Valkyrie" title="Valkyrie"
+              onclick="selectAvatarPreset(this.src)">
+          </div>
+
+          <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <button type="submit" style="flex: 1;">Salvar Alterações</button>
+            <button type="button" class="danger" onclick="closeEditProfileModal()">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL: CRIAR NOVA LISTA -->
+    <div id="create-list-modal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Criar Lista de Jogos</h3>
+          <button class="modal-close-btn" onclick="closeCreateListModal()">&times;</button>
+        </div>
+        <form onsubmit="handleCreateList(event)">
+          <label>Nome da Lista</label>
+          <input type="text" id="new-list-name" required placeholder="Ex: Top RPGs da Minha Vida, Zerar em 2026...">
+
+          <label>Descrição (Opcional)</label>
+          <textarea id="new-list-desc" rows="3"
+            placeholder="Ex: Lista dos melhores jogos para jogar com amigos..."></textarea>
+
+          <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <button type="submit" style="flex: 1;">Criar Lista</button>
+            <button type="button" class="danger" onclick="closeCreateListModal()">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL: EDITAR REGISTRO DE JOGO -->
+    <div id="edit-log-modal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="edit-log-title">Editar Registro</h3>
+          <button class="modal-close-btn" onclick="closeEditLogModal()">&times;</button>
+        </div>
+        <form onsubmit="handleUpdateLog(event)">
+          <input type="hidden" id="edit-log-id">
+
+          <label>Status</label>
+          <select id="edit-log-status">
+            <option value="jogando">Jogando</option>
+            <option value="concluido">Concluído</option>
+            <option value="backlog">Quero Jogar (Backlog)</option>
+            <option value="abandonado">Abandonado</option>
+          </select>
+
+          <label>Sua Nota (0 a 10)</label>
+          <input type="number" id="edit-log-rating" min="0" max="10" step="1" placeholder="Nota de 0 a 10"
+            onkeydown="if(event.key === '-' || event.key === 'e' || event.key === '+') event.preventDefault();"
+            oninput="if(this.value < 0) this.value = 0; if(this.value > 10) this.value = 10;">
+
+          <label>Review (Crítica)</label>
+          <textarea id="edit-log-review" rows="4" placeholder="O que você achou do jogo?"></textarea>
+
+          <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <button type="submit" style="flex: 1;">Salvar Alterações</button>
+            <button type="button" class="danger" onclick="closeEditLogModal()">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL: CONFIRMAÇÃO ESTILIZADA (Substitui confirm feio do navegador) -->
+    <div id="confirm-modal" class="modal-overlay">
+      <div class="modal-content" style="max-width: 420px; text-align: center;">
+        <div style="font-size: 2.6rem; margin-bottom: 0.5rem;" id="confirm-icon">⚠️</div>
+        <h3 id="confirm-title" style="margin-bottom: 0.5rem; font-size: 1.4rem;">Confirmar Ação</h3>
+        <p id="confirm-message"
+          style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem; line-height: 1.5;"></p>
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+          <button type="button" id="confirm-btn-cancel" class="outline" style="flex: 1;">Cancelar</button>
+          <button type="button" id="confirm-btn-ok" class="danger" style="flex: 1;">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Container de Toasts Flutuantes -->
+  <div id="toast-container"></div>
+
+  <!-- Scripts da Aplicação (Backend Local PHP) -->
+  <script src="api.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>

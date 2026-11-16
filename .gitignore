@@ -1,0 +1,12 @@
+# Logs e arquivos temporários
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Cache de token da API
+.twitch_token.json
+savepoint_twitch_token.json
+
+# Sessões e cookies de teste
+cookies.txt
