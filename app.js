@@ -930,13 +930,19 @@ async function renderCustomLists() {
   container.innerHTML = '';
   lists.forEach(l => {
     const createdDate = l.createdAt ? new Date(l.createdAt).toLocaleDateString('pt-BR') : 'Recentemente';
+    const gameCount = l.gameCount || 0;
     container.innerHTML += `
-      <div class="card" style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; border-left: 3px solid var(--secondary);">
-        <div>
-          <h4 style="font-size: 1.1rem; color: var(--text-main);">${escapeHtml(l.name)}</h4>
-          <p style="color: var(--text-muted); font-size:0.85rem; margin-top: 0.2rem;">${escapeHtml(l.desc || 'Sem descrição')} • Criada em ${createdDate}</p>
+      <div class="card" style="margin-bottom: 1rem; border-left: 3px solid var(--secondary);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+          <div style="flex: 1;">
+            <h4 style="font-size: 1.1rem; color: var(--text-main);">${escapeHtml(l.name)}</h4>
+            <p style="color: var(--text-muted); font-size:0.85rem; margin-top: 0.2rem;">${escapeHtml(l.desc || 'Sem descrição')} • ${gameCount} jogo${gameCount !== 1 ? 's' : ''} • Criada em ${createdDate}</p>
+          </div>
+          <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+            <button class="outline" style="font-size: 0.8rem; padding: 0.3rem 0.7rem;" onclick="viewListItems(${l.id}, '${escapeHtml(l.name)}')">👁 Ver Jogos</button>
+            <button class="btn-icon delete" title="Excluir lista" onclick="deleteCustomList('${l.id}')">🗑️</button>
+          </div>
         </div>
-        <button class="btn-icon delete" title="Excluir lista" onclick="deleteCustomList('${l.id}')">🗑️</button>
       </div>
     `;
   });
@@ -968,6 +974,118 @@ async function handleCreateList(e) {
   closeCreateListModal();
   renderCustomLists();
   showToast("Lista criada com sucesso!", "success");
+}
+
+// === ADICIONAR JOGO A LISTA ===
+
+async function openAddToListModal() {
+  if (!currentUser) {
+    showToast("Faça login para adicionar jogos às listas.", "info");
+    return navigate('login');
+  }
+
+  const game = currentLoadedGames.find(g => g.id === currentGameId)
+    || (typeof FALLBACK_GAMES !== 'undefined' && FALLBACK_GAMES.find(g => g.id === currentGameId));
+
+  if (!game) {
+    showToast("Jogo não encontrado.", "error");
+    return;
+  }
+
+  const titleEl = document.getElementById('add-to-list-modal-title');
+  if (titleEl) titleEl.innerText = `Adicionar à Lista — ${game.title}`;
+
+  const optionsEl = document.getElementById('add-to-list-options');
+  optionsEl.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">Carregando listas...</p>';
+
+  document.getElementById('add-to-list-modal').classList.add('active');
+
+  const { data: lists, error } = await apiLists.getAll();
+
+  if (error || !lists || lists.length === 0) {
+    optionsEl.innerHTML = `
+      <div style="text-align: center; padding: 1rem 0;">
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Você não tem nenhuma lista ainda.</p>
+      </div>
+    `;
+    return;
+  }
+
+  optionsEl.innerHTML = '';
+  lists.forEach(list => {
+    const btn = document.createElement('button');
+    btn.className = 'outline';
+    btn.style.cssText = 'text-align: left; justify-content: flex-start; padding: 0.6rem 1rem; font-size: 0.9rem;';
+    btn.innerHTML = `<span style="font-weight:600;">${escapeHtml(list.name)}</span><span style="color:var(--text-muted); font-size:0.8rem; margin-left:0.5rem;">${list.gameCount || 0} jogo${(list.gameCount || 0) !== 1 ? 's' : ''}</span>`;
+    btn.onclick = () => addGameToList(list.id, list.name, game);
+    optionsEl.appendChild(btn);
+  });
+}
+
+function closeAddToListModal() {
+  document.getElementById('add-to-list-modal').classList.remove('active');
+}
+
+async function addGameToList(listId, listName, game) {
+  const { error } = await apiLists.addItem(listId, game.id, game.title, game.cover || '');
+
+  if (error) {
+    showToast("Erro: " + error.message, "error");
+    return;
+  }
+
+  closeAddToListModal();
+  showToast(`"${game.title}" adicionado à lista "${listName}"! ✓`, "success");
+}
+
+async function viewListItems(listId, listName) {
+  const modal = document.getElementById('view-list-modal');
+  const titleEl = document.getElementById('view-list-modal-title');
+  const itemsEl = document.getElementById('view-list-items');
+
+  if (titleEl) titleEl.innerText = listName;
+  itemsEl.innerHTML = '<p style="color: var(--text-muted); padding: 1rem 0;">Carregando jogos...</p>';
+  modal.classList.add('active');
+
+  const { data: items, error } = await apiLists.getItems(listId);
+
+  if (error || !items || items.length === 0) {
+    itemsEl.innerHTML = `
+      <div style="text-align: center; padding: 2rem 0;">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📋</div>
+        <p style="color: var(--text-muted);">Nenhum jogo nesta lista ainda.</p>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.3rem;">Vá até a página de um jogo e clique em "📌 Adicionar à Lista".</p>
+      </div>
+    `;
+    return;
+  }
+
+  itemsEl.innerHTML = '';
+  items.forEach(item => {
+    itemsEl.innerHTML += `
+      <div style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+        <img src="${escapeHtml(item.game_cover || 'https://via.placeholder.com/48x64?text=?')}"
+          style="width: 48px; height: 64px; object-fit: cover; border-radius: 4px; flex-shrink: 0;"
+          onerror="this.src='https://via.placeholder.com/48x64?text=?'">
+        <div style="flex: 1;">
+          <p style="font-weight: 600; color: var(--text-main);">${escapeHtml(item.game_title)}</p>
+          <p style="color: var(--text-muted); font-size: 0.8rem;">Adicionado em ${item.created_at ? new Date(item.created_at).toLocaleDateString('pt-BR') : '—'}</p>
+        </div>
+        <button class="btn-icon delete" title="Remover da lista" onclick="removeFromList(${item.id}, ${listId}, '${escapeHtml(listName)}')">🗑️</button>
+      </div>
+    `;
+  });
+}
+
+async function removeFromList(itemId, listId, listName) {
+  const { error } = await apiLists.removeItem(itemId);
+  if (error) {
+    showToast("Erro ao remover: " + error.message, "error");
+    return;
+  }
+  showToast("Jogo removido da lista!", "success");
+  viewListItems(listId, listName); // Recarrega o modal
+  renderCustomLists();             // Atualiza contagem no perfil
 }
 
 async function deleteCustomList(listId) {
