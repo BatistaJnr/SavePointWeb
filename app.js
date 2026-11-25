@@ -1035,14 +1035,23 @@ function openLogModal() {
     showToast("Faça login para poder registrar jogos no seu perfil.", "info");
     return navigate('login');
   }
-  document.getElementById('log-modal').style.display = 'block';
+  // Atualiza o título do modal com o nome do jogo atual
+  const game = currentLoadedGames.find(g => g.id === currentGameId)
+    || (typeof FALLBACK_GAMES !== 'undefined' && FALLBACK_GAMES.find(g => g.id === currentGameId));
+  const titleEl = document.getElementById('log-modal-title');
+  if (titleEl && game) titleEl.innerText = `Adicionar ao Log — ${game.title}`;
+  document.getElementById('log-modal').classList.add('active');
 }
 
 function closeLogModal() {
-  document.getElementById('log-modal').style.display = 'none';
-  document.getElementById('log-status').value = 'jogando';
-  document.getElementById('log-rating').value = '';
-  document.getElementById('log-review').value = '';
+  const modal = document.getElementById('log-modal');
+  if (modal) modal.classList.remove('active');
+  const status = document.getElementById('log-status');
+  const rating = document.getElementById('log-rating');
+  const review = document.getElementById('log-review');
+  if (status) status.value = 'jogando';
+  if (rating) rating.value = '';
+  if (review) review.value = '';
 }
 
 async function saveLog() {

@@ -128,26 +128,7 @@
         </div>
       </div>
 
-      <div id="log-modal" class="card" style="display: none; border: 2px solid var(--primary); margin-top: 2rem;">
-        <h3>Registrar Jogo</h3>
-        <div style="margin-top: 1rem;">
-          <label>Status</label>
-          <select id="log-status">
-            <option value="jogando">Jogando</option>
-            <option value="concluido">Concluído</option>
-            <option value="abandonado">Abandonado</option>
-            <option value="backlog">Quero Jogar (Backlog)</option>
-          </select>
-          <label>Nota (0 a 10)</label>
-          <input type="number" id="log-rating" min="0" max="10" step="1" placeholder="Ex: 9"
-            onkeydown="if(event.key === '-' || event.key === 'e' || event.key === '+') event.preventDefault();"
-            oninput="if(this.value < 0) this.value = 0; if(this.value > 10) this.value = 10;">
-          <label>Review (Crítica)</label>
-          <textarea id="log-review" rows="4"></textarea>
-          <button onclick="saveLog()">Salvar Registro</button>
-          <button class="danger" style="margin-left: 1rem;" onclick="closeLogModal()">Cancelar</button>
-        </div>
-      </div>
+
 
       <div class="mt-2">
         <h3>Reviews da Comunidade</h3>
@@ -285,6 +266,38 @@
             <button type="button" class="danger" onclick="closeEditProfileModal()">Cancelar</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- MODAL: ADICIONAR AO LOG -->
+    <div id="log-modal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="log-modal-title">Adicionar ao Log</h3>
+          <button class="modal-close-btn" onclick="closeLogModal()">&times;</button>
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label>Status</label>
+          <select id="log-status">
+            <option value="jogando">Jogando</option>
+            <option value="concluido">Concluído</option>
+            <option value="backlog">Quero Jogar (Backlog)</option>
+            <option value="abandonado">Abandonado</option>
+          </select>
+
+          <label style="margin-top: 1rem;">Sua Nota (0 a 10)</label>
+          <input type="number" id="log-rating" min="0" max="10" step="1" placeholder="Nota de 0 a 10"
+            onkeydown="if(event.key === '-' || event.key === 'e' || event.key === '+') event.preventDefault();"
+            oninput="if(this.value < 0) this.value = 0; if(this.value > 10) this.value = 10;">
+
+          <label style="margin-top: 1rem;">Review (Crítica)</label>
+          <textarea id="log-review" rows="4" placeholder="O que você achou do jogo?"></textarea>
+
+          <div style="display: flex; gap: 1rem; margin-top: 1.25rem;">
+            <button type="button" onclick="saveLog()" style="flex: 1;">💾 Salvar no Log</button>
+            <button type="button" class="danger" onclick="closeLogModal()">Cancelar</button>
+          </div>
+        </div>
       </div>
     </div>
 
